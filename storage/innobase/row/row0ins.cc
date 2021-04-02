@@ -1433,8 +1433,6 @@ row_ins_foreign_check_on_constraint(
 		btr_pcur_store_position(cascade->pcur, mtr);
 	}
 
-	mtr_commit(mtr);
-
 	ut_a(cascade->pcur->rel_pos == BTR_PCUR_ON);
 
 	cascade->state = UPD_NODE_UPDATE_CLUSTERED;
@@ -1450,6 +1448,9 @@ row_ins_foreign_check_on_constraint(
 		ib::warn() << "WSREP: foreign key append failed: " << err;
 	} else
 #endif /* WITH_WSREP */
+
+	mtr_commit(mtr);
+
 	err = row_update_cascade_for_mysql(thr, cascade,
                                            foreign->foreign_table);
 
