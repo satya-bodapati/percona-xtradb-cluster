@@ -175,6 +175,9 @@ static dberr_t trx_rollback_for_mysql_low(
   transactions. */
 
   trx_rollback_to_savepoint_low(trx, nullptr);
+#ifdef WITH_WSREP
+  ut_ad(!trx->lock.was_chosen_as_wsrep_victim);
+#endif /* WITH_WSREP */
 
   trx->op_info = "";
 
@@ -197,6 +200,12 @@ static dberr_t trx_rollback_low(trx_t *trx) {
     case TRX_STATE_NOT_STARTED:
       trx->will_lock = 0;
       ut_ad(trx->in_mysql_trx_list);
+#ifdef WITH_WSREP
+      /* If the transaction is aborted, clean this flag.
+      Otherwise, a new transaction will use this trx
+      object and will be treated as a victim */
+      trx->lock.was_chosen_as_wsrep_victim = false;
+#endif /* WITH_WSREP */
       return (DB_SUCCESS);
 
     case TRX_STATE_ACTIVE:
