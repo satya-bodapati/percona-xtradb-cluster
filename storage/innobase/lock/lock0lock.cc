@@ -615,6 +615,12 @@ request is really for a 'gap' type lock */
         return false;
       }
     }
+
+    /** Cannot happen. ie two HP trxs conflicting on locks */
+    if (wsrep_thd_is_BF(trx->mysql_thd, false) &&
+        wsrep_thd_is_BF(lock2->trx->mysql_thd, true)) {
+      ut_a(0);
+    }
 #endif /* WITH_WSREP */
 
     return (true);
@@ -2130,6 +2136,11 @@ void lock_make_trx_hit_list(trx_t *hp_trx, hit_list_t &hit_list) {
           return true;
         }
 #ifdef WITH_WSREP
+
+        if (trx_is_high_priority(trx) && trx_is_high_priority(hp_trx)) {
+          ut_a(0);
+        }
+
         if (wsrep_kill_victim(hp_trx, trx)) {
             if (wsrep_debug)
                 ib::info() << "BF abort skipped for " << trx->id;
